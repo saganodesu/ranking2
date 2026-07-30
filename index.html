@@ -1,1 +1,43 @@
-# ranking2
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ランキング作成ツール（月間合計版）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>ランキング作成ツール（月間合計）</h1>
+
+<div class="box">
+  <button id="fileBtn">ファイル選択</button>
+  <span id="fileName"></span>
+  <input type="file" id="fileInput" style="display:none;">
+</div>
+
+<div class="box">
+  <textarea id="logInput" placeholder="ログをここに貼り付ける"></textarea>
+</div>
+
+<div class="box">
+  <label>対象日：</label>
+  <input type="date" id="targetDate">
+</div>
+
+<div class="box">
+  <button id="calcBtn">ランキング作成</button>
+</div>
+
+<div class="box">
+  <pre id="resultText"></pre>
+</div>
+
+<div class="box">
+  <button id="copyBtn">コピー</button>
+  <span id="copyMsg" style="display:none;">コピーしました！</span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
+
