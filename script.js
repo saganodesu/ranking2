@@ -48,8 +48,6 @@ function parseAllLogs(rawText) {
   let currentDate = null;
 
   const dateLineRegex = /^(\d{4})[./](\d{1,2})[./](\d{1,2})/;
-  const schoolRegex = /(学校あり|学校アリ|ｶﾞｯｺｳｱﾘ|ガッコウアリ)/;
-  const examRegex = /受験生/;
 
   for (let i = 0; i < lines.length; i++) {
     let line = toHalfWidth(lines[i]);
@@ -78,6 +76,9 @@ function parseAllLogs(rawText) {
       const beforeReport = afterTime.split("勉強時間報告")[0].trim();
       const name = beforeReport;
 
+      // ★ 追加：名前が空 or Unknown の人は除外
+      if (!name || name === "Unknown") continue;
+
       let blockLines = [line];
       for (let j = i + 1; j < lines.length; j++) {
         const l = toHalfWidth(lines[j]);
@@ -93,18 +94,13 @@ function parseAllLogs(rawText) {
       const minutes = parseMinutes(block);
       if (minutes === 0) continue;
 
-      const school = schoolRegex.test(block);
-      const exam = examRegex.test(block);
-
       let msgDate = new Date(`${currentDate}T00:00:00`);
       msgDate.setHours(hour, minute, 0, 0);
 
       allReports.push({
         name,
         minutes,
-        date: msgDate,
-        school,
-        exam
+        date: msgDate
       });
     }
   }
@@ -157,22 +153,10 @@ document.getElementById('calcBtn').addEventListener('click', () => {
 
   const allReports = parseAllLogs(raw);
 
-  const { start, end } = getDailyRange(targetDateStr);
-
-  const latestToday = {};
-  allReports.forEach(r => {
-    if (r.date >= start && r.date <= end) {
-      latestToday[r.name] = r;
-    }
-  });
-
-  const todayEntries = Object.values(latestToday).sort((a, b) => b.minutes - a.minutes);
-
   const monthlyRanges = getMonthlyRanges(targetDateStr);
 
   const monthlyTotals = {};
 
-  // ★ 月間は「合計」
   monthlyRanges.forEach(range => {
     const daily = {};
 
@@ -187,21 +171,16 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     }
   });
 
-  const d = new Date(targetDateStr);
-  const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
-
   let text = "";
+  text += `月間総合ランキング\n`;
 
-  text += `総合ランキング ${dateLabel}\n`;
-  todayEntries.forEach((r, i) => {
-    const h = Math.floor(r.minutes / 60);
-    const m = r.minutes % 60;
-    const monthH = Math.floor((monthlyTotals[r.name] || 0) / 60);
+  const monthlySorted = Object.entries(monthlyTotals)
+    .sort((a, b) => b[1] - a[1]);
 
-    text += `${i + 1}位 ${r.name}：${h}時間${m}分　(${monthH}h)\n`;
+  monthlySorted.forEach(([name, total], i) => {
+    const h = Math.floor(total / 60);
+    text += `${i + 1}位 ${name}:${h}時間\n`;
   });
-
-  text += `\n※括弧内は今月の合計勉強時間です`;
 
   document.getElementById('resultText').textContent = text;
 });
@@ -226,4 +205,3 @@ window.addEventListener("load", () => {
   const target = document.getElementById("targetDate");
   if (target) target.value = `${yyyy}-${mm}-${dd}`;
 });
-
