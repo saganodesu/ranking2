@@ -1,43 +1,533 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>ランキング作成ツール（月間合計版）</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>勉強時間ランキング</title>
+    <style>
+        :root {
+            --bg-main: #f5f5f7;
+            --bg-card: #ffffff;
+            --border-soft: #d2d2d7;
+            --accent: #0071e3;
+            --text-main: #1d1d1f;
+            --text-sub: #6e6e73;
+            --radius-card: 20px;
+            --radius-input: 14px;
+            --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.06);
+            --safe-bottom: env(safe-area-inset-bottom, 16px);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-shell {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 18px 16px calc(24px + var(--safe-bottom));
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 4px;
+            padding: 8px 0;
+        }
+
+        .app-header h1 {
+            font-weight: 620;
+            letter-spacing: 0.02em;
+            font-size: 26px;
+            margin: 0 0 4px;
+            color: var(--text-main);
+        }
+
+        .app-header p {
+            margin: 0;
+            color: var(--text-sub);
+            font-size: 14px;
+            font-weight: 450;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-soft);
+            padding: 20px 18px;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 590;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.01em;
+        }
+
+        .card-title span.icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 8px;
+            background: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .row+.row {
+            margin-top: 14px;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--text-sub);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        input[type="date"],
+        textarea {
+            width: 100%;
+            border-radius: var(--radius-input);
+            border: 1px solid var(--border-soft);
+            padding: 12px 12px;
+            font-size: 15px;
+            outline: none;
+            background: #f9f9fb;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+        }
+
+        input[type="date"] {
+            min-height: 46px;
+            color: var(--text-main);
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        input[type="date"]:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+        }
+
+        .btn {
+            border-radius: 999px;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 540;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.1s ease;
+            touch-action: manipulation;
+            min-width: 100px;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(0, 113, 227, 0.3);
+            width: 100%;
+        }
+
+        .btn-primary:active {
+            background: #005bb5;
+            box-shadow: 0 6px 14px rgba(0, 113, 227, 0.4);
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: var(--text-main);
+            border: 1px solid var(--border-soft);
+            padding: 10px 18px;
+        }
+
+        .btn-secondary:active {
+            background: #e5e5ea;
+            transform: scale(0.97);
+        }
+
+        .file-name {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-left: 8px;
+            word-break: break-all;
+        }
+
+        .result-box {
+            white-space: pre-wrap;
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            font-size: 14px;
+            background: #f5f5f7;
+            border-radius: 16px;
+            padding: 14px 14px;
+            border: 1px solid var(--border-soft);
+            min-height: 140px;
+            line-height: 1.6;
+            word-break: break-word;
+            color: #1d1d1f;
+        }
+
+        .copy-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .copy-msg {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-left: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .flex-1 {
+            flex: 1 1 180px;
+        }
+
+        .full-width {
+            flex: 1 1 100%;
+        }
+
+        @media (max-width: 400px) {
+            .app-shell {
+                padding: 12px 12px calc(20px + var(--safe-bottom));
+                gap: 14px;
+            }
+            .card {
+                padding: 18px 14px;
+            }
+            .btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="app-shell">
+        <header class="app-header">
+            <h1>勉強時間ランキング</h1>
+            <p>LINEログから月間ランキングを自動作成</p>
+        </header>
 
-<h1>ランキング作成ツール（月間合計）</h1>
+        <section class="card">
+            <div class="card-title">
+                <span class="icon">L</span>
+                ログを入力
+            </div>
 
-<div class="box">
-  <button id="fileBtn">ファイル選択</button>
-  <span id="fileName"></span>
-  <input type="file" id="fileInput" style="display:none;">
-</div>
+            <div class="row">
+                <div class="flex-1">
+                    <label>対象日</label>
+                    <input type="date" id="targetDate">
+                </div>
+                <div class="flex-1" style="display: flex; align-items: flex-end;">
+                    <div style="width: 100%;">
+                        <label>ファイル読込</label>
+                        <button id="fileBtn" class="btn btn-secondary" style="width: 100%;">
+                            ファイルを選択
+                        </button>
+                        <span id="fileName" class="file-name"></span>
+                        <input type="file" id="fileInput" accept=".txt,text/plain" style="display:none;">
+                    </div>
+                </div>
+            </div>
 
-<div class="box">
-  <textarea id="logInput" placeholder="ログをここに貼り付ける"></textarea>
-</div>
+            <div class="row">
+                <div class="full-width">
+                    <label>ログテキスト</label>
+                    <textarea id="logInput" placeholder="ここにLINEの勉強時間ログを貼り付け"></textarea>
+                </div>
+            </div>
 
-<div class="box">
-  <label>対象日：</label>
-  <input type="date" id="targetDate">
-</div>
+            <div class="row">
+                <button id="calcBtn" class="btn btn-primary">
+                    ランキングを計算
+                </button>
+            </div>
+        </section>
 
-<div class="box">
-  <button id="calcBtn">ランキング作成</button>
-</div>
+        <section class="card">
+            <div class="card-title">
+                <span class="icon">R</span>
+                月間ランキング結果
+            </div>
 
-<div class="box">
-  <pre id="resultText"></pre>
-</div>
+            <div class="copy-row">
+                <button id="copyBtn" class="btn btn-secondary">
+                    結果をコピー
+                </button>
+                <span id="copyMsg" class="copy-msg">コピーしました</span>
+            </div>
 
-<div class="box">
-  <button id="copyBtn">コピー</button>
-  <span id="copyMsg" style="display:none;">コピーしました！</span>
-</div>
+            <div class="row">
+                <div class="full-width">
+                    <div id="resultText" class="result-box">ここにランキングが表示されます</div>
+                </div>
+            </div>
+        </section>
+    </div>
 
-<script src="script.js"></script>
+    <script>
+        (function() {
+            const fileBtn = document.getElementById('fileBtn');
+            const fileInput = document.getElementById('fileInput');
+            const fileNameSpan = document.getElementById('fileName');
+            const logInput = document.getElementById('logInput');
+            const targetDate = document.getElementById('targetDate');
+            const calcBtn = document.getElementById('calcBtn');
+            const resultText = document.getElementById('resultText');
+            const copyBtn = document.getElementById('copyBtn');
+            const copyMsg = document.getElementById('copyMsg');
+
+            fileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileNameSpan.textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        logInput.value = event.target.result;
+                    };
+                    reader.readAsText(file, 'UTF-8');
+                } else {
+                    fileNameSpan.textContent = '';
+                }
+            });
+
+            function toHalfWidth(str) {
+                return str.replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+                    .replace(/　/g, " ");
+            }
+
+            function parseMinutes(text) {
+                text = toHalfWidth(text);
+                const halfMatch = text.match(/(\d+)時間半/);
+                if (halfMatch) return Number(halfMatch[1]) * 60 + 30;
+
+                const hm = text.match(/(\d+)時間\s*(\d+)分/);
+                if (hm) return Number(hm[1]) * 60 + Number(hm[2]);
+
+                const h = text.match(/(\d+)時間/);
+                if (h) return Number(h[1]) * 60;
+
+                const m = text.match(/(\d+)分/);
+                if (m) return Number(m[1]);
+
+                return 0;
+            }
+
+            function parseAllLogs(rawText) {
+                const lines = rawText.split('\n').map(l => l.trim());
+                const allReports = [];
+                let currentDate = null;
+                const dateLineRegex = /^(\d{4})[./](\d{1,2})[./](\d{1,2})/;
+
+                for (let i = 0; i < lines.length; i++) {
+                    let line = toHalfWidth(lines[i]);
+                    const d = line.match(dateLineRegex);
+                    if (d) {
+                        const y = d[1];
+                        const m = d[2].padStart(2, "0");
+                        const day = d[3].padStart(2, "0");
+                        currentDate = `${y}-${m}-${day}`;
+                        continue;
+                    }
+
+                    if (line.includes("勉強時間報告")) {
+                        if (!currentDate) continue;
+                        const timeMatch = line.match(/^(\d{1,2}):(\d{2})/);
+                        if (!timeMatch) continue;
+
+                        const hour = Number(timeMatch[1]);
+                        const minute = Number(timeMatch[2]);
+
+                        let afterTime = line.replace(/^\d{1,2}:\d{2}\s*/, "");
+                        afterTime = afterTime.replace(/勉強時間報告(?=[0-9０-９半])/g, "勉強時間報告 ");
+
+                        const beforeReport = afterTime.split("勉強時間報告")[0].trim();
+                        const name = beforeReport;
+
+                        let blockLines = [line];
+                        for (let j = i + 1; j < lines.length; j++) {
+                            const l = toHalfWidth(lines[j]);
+                            if (/^\d{1,2}:\d{2}/.test(l)) break;
+                            if (dateLineRegex.test(l)) break;
+                            blockLines.push(l);
+                        }
+                        const block = blockLines.join(" ");
+                        const minutes = parseMinutes(block);
+                        if (minutes === 0) continue;
+
+                        let msgDate = new Date(`${currentDate}T00:00:00`);
+                        msgDate.setHours(hour, minute, 0, 0);
+
+                        allReports.push({
+                            name,
+                            minutes,
+                            date: msgDate,
+                        });
+                    }
+                }
+                return allReports;
+            }
+
+            function getDailyRange(targetDateStr) {
+                const start = new Date(`${targetDateStr}T12:00:00`);
+                const end = new Date(start);
+                end.setDate(end.getDate() + 1);
+                end.setHours(6, 0, 0, 0);
+                return { start, end };
+            }
+
+            function getMonthlyRanges(targetDateStr) {
+                const target = new Date(`${targetDateStr}T00:00:00`);
+                const year = target.getFullYear();
+                const month = target.getMonth();
+                const ranges = [];
+                for (let day = 1; day <= target.getDate(); day++) {
+                    const d = new Date(year, month, day);
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, "0");
+                    const dd = String(d.getDate()).padStart(2, "0");
+                    ranges.push(getDailyRange(`${yyyy}-${mm}-${dd}`));
+                }
+                return ranges;
+            }
+
+            function calculateRanking() {
+                let raw = logInput.value;
+                const targetDateStr = targetDate.value;
+
+                raw = raw.replace(/[""']/g, "");
+
+                if (!raw.trim()) {
+                    alert('ログを入力するか、ファイルを読み込んでください');
+                    return;
+                }
+                if (!targetDateStr) {
+                    alert('対象日を選択してください');
+                    return;
+                }
+
+                const allReports = parseAllLogs(raw);
+                const monthlyRanges = getMonthlyRanges(targetDateStr);
+
+                // 月間の合計時間を計算（全員分）
+                const monthlyTotals = {};
+
+                monthlyRanges.forEach(range => {
+                    const dailyLatest = {};
+                    allReports.forEach(r => {
+                        if (r.date >= range.start && r.date <= range.end) {
+                            if (!dailyLatest[r.name] || r.date > dailyLatest[r.name].date) {
+                                dailyLatest[r.name] = r;
+                            }
+                        }
+                    });
+                    for (const name in dailyLatest) {
+                        monthlyTotals[name] = (monthlyTotals[name] || 0) + dailyLatest[name].minutes;
+                    }
+                });
+
+                // 月間合計でソート
+                const sortedEntries = Object.entries(monthlyTotals)
+                    .sort((a, b) => b[1] - a[1]);
+
+                const d = new Date(targetDateStr);
+                const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
+
+                let text = `月間ランキング ${dateLabel}\n`;
+                sortedEntries.forEach(([name, totalMinutes], i) => {
+                    const hours = (totalMinutes / 60).toFixed(1);
+                    text += `${i + 1}位 ${name}：${hours}h\n`;
+                });
+
+                if (sortedEntries.length === 0) {
+                    text += `報告がありません`;
+                }
+
+                resultText.textContent = text;
+            }
+
+            function copyResult() {
+                const text = resultText.textContent;
+                if (!text || text === 'ここにランキングが表示されます') {
+                    alert('コピーする結果がありません');
+                    return;
+                }
+                navigator.clipboard.writeText(text).then(() => {
+                    copyMsg.style.display = "inline";
+                    setTimeout(() => { copyMsg.style.display = "none"; }, 1800);
+                }).catch(() => {
+                    alert('コピーに失敗しました');
+                });
+            }
+
+            calcBtn.addEventListener('click', calculateRanking);
+            copyBtn.addEventListener('click', copyResult);
+
+            window.addEventListener("load", () => {
+                const now = new Date();
+                now.setDate(now.getDate() - 1);
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, "0");
+                const dd = String(now.getDate()).padStart(2, "0");
+                if (targetDate) targetDate.value = `${yyyy}-${mm}-${dd}`;
+
+                resultText.textContent = 'ここにランキングが表示されます';
+            });
+        })();
+    </script>
 </body>
 </html>
-
